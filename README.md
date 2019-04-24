@@ -10,9 +10,15 @@ Note, use the Aura21 branch.
 
 # Photos
 
-![Aura21](front-back.jpg)
-![PCB front](pcb_front.jpg)
-![PCB back](pcb_back.jpg)
+![Aura21](docs/images/front-back.jpg)
+
+Note I've desoldered the SPI flash chip from the PCB in the below photo.
+
+![PCB front](docs/images/pcb_front.jpg)
+
+The back of the PCB has test points. The CC1110 debug port, used for programmin (see below), uses TP2, TP3, and TP5.
+
+![PCB back](docs/images/pcb_back.jpg)
 
 # Pin mappings
 
@@ -26,7 +32,7 @@ To program the CC1110, wire to the debug port as described in the datasheet. The
 CC1110 PIN        Aura21 pad        Raspberry Pi GPIO       mraa PIN
 P2_1 (debug)      TP3               BCM 17                  11
 P2_2 (clock)      TP5               BCM 18                  12
-RESET_N (reset)                     BCM 27                  13
+RESET_N (reset)   TP2               BCM 27                  13
 ```
 
 Programming can be done with [ccprog](https://github.com/ps2/ccprog), which uses [mraa](https://github.com/intel-iot-devkit/mraa) and thus mraa pin numbering:
