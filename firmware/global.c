@@ -166,6 +166,10 @@ void io_init(void)
     //sleepMillis(100);
   
  #endif 
+#elif defined(AURA21)
+				//Disable WDT     
+				IEN2&=~IEN2_WDTIE;
+				IEN0&=~EA;        
 #else       // CC1111
  #ifdef DONSDONGLES
     // CC1111 USB Dongle

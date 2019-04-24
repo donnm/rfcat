@@ -16,9 +16,9 @@ libsvcom = cc1111_vcom.rel cc1111_vcomdesc.rel chipcon_usbdebug.rel chipcon_dma.
 libsusb  = chipcon_usb.rel chipcon_usbdebug.rel chipcon_dma.rel bootloader.rel
 libsimme = 
 libsidongle  = $(libsimme) immeusb.rel immeusbdebug.rel chipcon_dma.rel
+libsspicom = cc1110_spicom.rel chipcon_usbdebug.rel chipcon_dma.rel
 
-
-all: 	RfCatChronos RfCatChronosCCBootloader RfCatDons RfCatDonsCCBootloader RfCatYS1 RfCatYS1CCBootloader RfCatSRF RfCatSRFCCBootloader
+all: 	RfCatChronos RfCatChronosCCBootloader RfCatDons RfCatDonsCCBootloader RfCatYS1 RfCatYS1CCBootloader RfCatSRF RfCatSRFCCBootloader Aura21
 	make clean immeSniff
 
 donfw: 	RfCatDons
@@ -26,7 +26,7 @@ immefw: immeSniff
 testrecv: testrecvapplication.hex
 testxmit: testxmitapplication.hex
 ys1fw: RfCatYS1
-
+aura21fw: Aura21
 
 # helper targets 
 chipcon_usb.rel: chipcon_usb.c include/*.h
@@ -50,6 +50,7 @@ RfCatYS1CCBootloader: 		clean RfCatYS1CCBootloader.hex
 RfCatSRF: 			clean RfCatSRF.hex
 RfCatSRFCCBootloader:		clean RfCatSRFCCBootloader.hex
 immeSniff: 					clean immeSniff.hex
+Aura21:	clean Aura21.hex
 
 RfCatChronos.hex: DEFINES = -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
 RfCatChronos.hex: $(libsusb) $(apps1111)
@@ -116,6 +117,12 @@ immeSniff.hex: $(libsimme) $(appsimme)
 	@printf "\n\n==immeSniff.hex building==\n", $(DEFINES)
 	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsimme) $(appsimme) $(DEFINES)
 	packihx <appSniff.ihx >bins/immeSniff.hex
+
+Aura21.hex: DEFINES = -DAURA21 -DCC1111 -DSPI_COM
+Aura21.hex: $(apps1111) $(libsspicom)
+	@printf "\n\n==Aura21.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsspicom) $(apps1111) $(DEFINES)
+	packihx <appFHSSNIC.ihx >bins/Aura21.hex
 
 
 ## vanilla build targets ##

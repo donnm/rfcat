@@ -141,7 +141,11 @@ extern __xdata u8 ledMode;
  #include "immekeys.h"
  #include "immeio.h"
  //#include "pm.h"
-
+#elif defined(AURA21)
+   #define LED_RED   P1_4        
+   #define LED_GREEN P0_2        
+   #define SLEEPTIMER  1200      
+   #define PLATFORM_CLOCK_FREQ 26
 #else
     #define SLEEPTIMER  1100
     #define PLATFORM_CLOCK_FREQ 24

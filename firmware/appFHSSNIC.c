@@ -6,9 +6,13 @@
 #include "nic.h"
 #include "string.h"
 
-#ifdef VIRTUAL_COM
+#if defined(VIRTUAL_COM)
     #include "cc1111.h"
     #include "cc1111_vcom.h"
+#elif defined(AURA21)
+				#include <cc1110.h>
+				#include <cc1110-ext.h>
+				#include <cc1110_spicom.h>
 #else
     #include "cc1111usb.h"
 #endif
@@ -63,6 +67,11 @@ __xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
 void t2IntHandler(void) __interrupt T2_VECTOR;
 void t3IntHandler(void) __interrupt T3_VECTOR;
 int appHandleEP5();
+
+#if defined(AURA21)
+void rx1_isr(void) __interrupt URX1_VECTOR;
+void tx1_isr(void) __interrupt UTX1_VECTOR;
+#endif
 
 /**************************** PHY LAYER *****************************/
 
@@ -791,7 +800,7 @@ void appMainLoop(void)
  *      cleared by an interrupt when the data has been received on the host side.                */
 int appHandleEP5()
 {   // not used by VCOM
-#ifndef VIRTUAL_COM
+#if !(defined(VIRTUAL_COM) || defined(AURA21))
     __xdata u16 len, repeat, offset;
     __xdata u8 * __xdata buf = &ep5.OUTbuf[0];
     __xdata u8 blocks;
@@ -1136,7 +1145,7 @@ void appHandleEP0OUTdone(void)
 /* called each time a usb OUT packet is received */
 void appHandleEP0OUT(void)
 {
-#ifndef VIRTUAL_COM
+#if !(defined(VIRTUAL_COM) || defined(AURA21))
     u16 loop;
     __xdata u8* dst;
     __xdata u8* src;
@@ -1173,7 +1182,7 @@ void appHandleEP0OUT(void)
  * to handle OUT packets in appHandleEP0OUTdone, which is called when the last packet is complete*/
 int appHandleEP0(__xdata USB_Setup_Header* pReq)
 {
-#ifdef VIRTUAL_COM
+#if defined(VIRTUAL_COM) || defined(AURA21)
     pReq = 0;
 #else
     if (pReq->bmRequestType & USB_BM_REQTYPE_DIRMASK)       // IN to host
