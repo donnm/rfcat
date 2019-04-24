@@ -8,6 +8,12 @@ This is a stripped down README to show how to get the Aura21 working with rfcat.
 
 Note, use the Aura21 branch.
 
+# Photos
+
+![Aura21](front-back.jpg)
+![PCB front](pcb_front.jpg)
+![PCB back](pcb_back.jpg)
+
 # Pin mappings
 
 Requires soldering skills. See [CC1110 datasheet](http://www.ti.com/product/CC1110-CC1111#).
