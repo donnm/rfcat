@@ -1,253 +1,54 @@
-Welcome to the rfcat project
+# RfCat for Aura21 (CC1110)
 
-## Table of Contents
+This is a port of rfcat for the [Aura21](https://www.displaydata.com/solutions) electronic price tag. This code only makes use of the CC1110 RF chip, not the epaper display nor the SPI flash on the PCB. Patches welcome for those!
 
-* [Goals](#goals)
-* [Requirements](#requirements)
-  * [Other requirements](#other-requirements)
-  * [Build requirements](#build-requirements)
-* [Development](#development)
-  * ["Gotchas"](#gotchas)
-* [Installing on hardware](#installing-on-hardware)
-  * [Allowing non-root dongle access](#allowing-non-root-dongle-access)
-  * [Supported dongles](#supported-dongles)
-  * [Your build environment](#your-build-environment)
-* [Installing with bootloader](#installing-with-bootloader)
-  * [To install](#to-install)
-* [Installing client](#installing-client)
-* [Using RfCat](#using-rfcat)
-* [Epilogue](#epilogue)
+This code is heavily based off of the port of rfcat for the [Edison Explorer Board](https://github.com/EnhancedRadioDevices/rfcat). More generally this code can be used to interact with any CC1110-based device.
 
-## GOALS
+This is a stripped down README to show how to get the Aura21 working with rfcat. For more information about rfcat see the [rfcat project](https://github.com/atlas0fd00m/rfcat).
 
-The goals of the project are to reduce the time for security researchers to create needed tools for analyzing unknown targets, to aid in reverse-engineering of hardware, and to satiate my rf lust.
+Note, use the Aura21 branch.
 
-## REQUIREMENTS
+# Pin mappings
 
-RfCat currently requires Python 2.7.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff" and other str/bytes issues.
+Requires soldering skills. See [CC1110 datasheet](http://www.ti.com/product/CC1110-CC1111#).
 
-### Other requirements
+## Programming
 
-* python usb
-* libusb - should be able to work with either 1.x or 0.1 versions.  please let us know if you run into issues.
-* pyreadline (especially for Windows)
-* PySide2 (for Spectrum Analyzer GUI):  (Ubuntu 18.10+: python-pyside2)
-    $ sudo pip install PySide2
-
-### Build requirements
-
-* Make
-* SDCC (code is kept up-to-date with the current Ubuntu release, as of this writing: 3.4.0+dfsg-2ubuntu1)
-
-## DEVELOPMENT
-
-New development efforts should copy the "application.c" file to "appWhateverMyToolIs.c" and attempt to avoid making changes to other files in the repo if at all possible.  that is only a recommendation, because future bug-fixes in other libraries/headers will go much more smoothely for you.
-
-### Gotchas
-
-A couple [gotchas](https://en.wikipedia.org/wiki/Gotcha_(programming)) to keep in mind while developing for the cc1111
-
-* The memory model includes both "RAM" and "XDATA" concepts, and standard RAM variables and XDATA variables have different assembly instructions that are used to access them.  this means that you may find oddities when using a function written for XDATA on a standard RAM variable, and vice-versa.
-* Variables should be defined in a single .c file, and then "externs" declared in a .h file that can be included in other modules.  this is pretty standard for c programs, but both this and the previous point caused me difficulties at some points, and i found myself unsure what was causing my troubles.
-* RAM memory is not cheap.  use it sparingly.
-* You need to set the radio into IDLE mode before reconfiguring it
-* You need to set the radio into TX mode *before* writing to the RFD register (firmware) as it is a 1-byte FIFO.
-
-
-## INSTALLING ON HARDWARE
-
-Installing and getting up to speed with rfcat...
-
-First things first. Using rfcat requires that you either use the python client in root mode (sudo works well), or configure udev to allow non-root users full access to the dongle. you must also have one of the supported dongles flashed with the necessary application firmware.
-
-### allowing non-root dongle access
+To program the CC1110, wire to the debug port as described in the datasheet. The pin mapping for a Raspberry Pi is:
 
 ```
-sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
-sudo udevadm control --reload-rules
+CC1110 PIN        Aura21 pad        Raspberry Pi GPIO       mraa PIN
+P2_1 (debug)      TP3               BCM 17                  11
+P2_2 (clock)      TP5               BCM 18                  12
+RESET_N (reset)                     BCM 27                  13
 ```
 
-This tool is created, maintained, and used primarily on linux.  make and sdcc must be installed for creating new firmware and some of the helper functions we provide through make.
+Programming can be done with [ccprog](https://github.com/ps2/ccprog), which uses [mraa](https://github.com/intel-iot-devkit/mraa) and thus mraa pin numbering:
 
-### supported dongles
+`sudo ccprog -p 12,11,13 erase`
 
-* [YARDStick One](https://greatscottgadgets.com/yardstickone)
-* cc1111emk (aka DONSDONGLES)
-* chronos watch dongle (aka CHRONOSDONGLE)
-* imme (limited support for both IMME and IMMEDONGLE)
-    * imme dongle is not really usable as of 1/31/2012
+`sudo ccprog -p 12,11,13 write bins/Aura21.hex`
 
+`sudo ccprog -p 12,11,13 reset`
 
+Programming should be done as above, it is important to erase before writing new firmware.
 
-#### GoodFET
-  
-```
+## SPI communication
 
-            --------------------------------
-            |                         1  2 |
-            |                         3  4 |
-       ------                         5  6 |  
-       | USB                          7  8 |
-       ------                         9 10 |
-            |                        11 12 |
-            | GoodFET                13 14 |
-            --------------------------------
-```
-
-
-#### Chronos Dongle
+To talk to the Aura21 using rfcat, we could use either serial or SPI. Only SPI is implemented, and the pin mapping is as follows:
 
 ```
-            --------------------------------
-            |                              |
-            |             RST 1  2 TP      ------
-            |             GND 3  4 VCC      USB |
-            |         DC/P2_2 5  6 DD/P2_1 ------
-            | Chronos                      |
-            --------------------------------
-
-               GoodFET            Chronos
-                 PIN                PIN
-
-                  1 <----- DD -----> 6
-                  2 <----- VCC ----> 4
-                  5 <----- RST ----> 1
-                  7 <----- DC -----> 5
-                  9 <----- GND ----> 3
+CC1110 PIN        Aura21 pad        Raspberry Pi GPIO
+P0_2              Not broken out    BCM 8 (probably not needed unless using more than one SPI slave)
+P0_3              SCLK SPI flash    BCM 11
+P0_4              MOSI SPI flash    BCM 10
+P0_5              MISO SPI flash    BCM 9
 ```
 
-#### EMK Dongle
-
-```
-            --------------------------------
-            | 2 4 6 8 10   2 4 6 8 10      |
-            | 1 3 5 7 9    1 3 5 7 9       |
-            |-TEST-PINS----DEBUG-PINS------|
-            |                              |
-       ------                              |
-       | USB                               |
-       ------                              |
-            | Don's Dongle (EMK)           |
-            --------------------------------
-
-               GoodFET              EMK  
-                 PIN             DEBUG PIN
-
-                  1 <----- DD -----> 4
-                  2 <----- VCC ----> 2
-                  5 <----- RST ----> 7
-                  7 <----- DC -----> 3
-                  9 <----- GND ----> 1
-```
-
-#### YARD Stick One
-
-Pogo pads on the back are clearly marked, but if you want to use the header...
-
-```
-            -----------------------------------------
-            | YARD Stick One      2 4 6 8 10 12 14  |
-            |                     1 3 5 7 9  11 13  ------
-            |                                        USB |
-            |                                       ------
-            |                                       |
-            -----------------------------------------
-
-    
-               GoodFET           YARD Stick One
-                 PIN                 PIN
-
-                  1 <----- DD -----> 1
-                  2 <----- VCC ----> 2
-                  5 <----- RST ----> 5
-                  7 <----- DC -----> 7
-                  9 <----- GND ----> 9
-```
-
-### Your build environment
-
-Intended development model is using a [GoodFET](http://goodfet.sf.net) although one of our developers uses the chipcon debugger from Texas Instruments.
-* install sdcc
-* install make
-* make sure both are in the path
-* cd into the `rfcat/firmware/` directory
-* `make testgoodfet` will read info from your dongle using the GoodFET. you should see something like:
-
-```
-SmartRF not found for this chip.
-Ident   CC1111/r1103/ps0x0400
-Freq         0.000 MHz
-RSSI    00
-```
-
-* `make backupdongle` will read the current firmware from your dongle to the file `.../bins/original-dongle-hex.backup`.
-  (`make restoredongle`) to revert to the original firmware. 
-* `make clean installRfCatChronosDongle` will clean, build, and install the RfCat (`appFHSSNIC.c`) firmware for a Chronos dongle.
-* `make clean installRfCatDonsDongle` will clean, build, and install the RfCat (`appFHSSNIC.c`) firmware for a cc1111emk.
-* `make clean installimmesnifffw` will clean, build, and install the RfSniff firmware for the IMME girls toy from girltech 
-
-## INSTALLING WITH BOOTLOADER
-
-Dependencies: Fergus Noble's CC-Bootloader (slightly modified). For your convenience, hex files are provided in 
-the CCBootloader sub-directory in firmware. 
-
-Source can be found here
-* https://github.com/AdamLaurie/CC-Bootloader
-
-Which is branched from here
-* https://github.com/fnoble/CC-Bootloader
-
-### To install
-
-We need permanent symlinks to the USB serial devices that will communicate with the CHRONOS, DONSDONGLE or YARDSTICKONE
-bootloader when required. If you haven't done this step already (see above), then run:
-
-```
-sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
-sudo udevadm control --reload-rules
-```
-
-Next, your user must have read/write access to the dongle when it shows up to the operating system.  
-For most Linux distros, this means you have to be a member of the "dialout" group.
-
-To prepare your dongle for the first time, you'll need to hook up your debugger as described above and do:
-
-(install `rfcat_bootloader` from the CC-Bootloader subdirectory to somewhere on your execution path)
-
-`cd firmware`
-
-for EMK/DONSDONGLE:
-  `make installdonsbootloader`
-
-for CHRONOS:
-  `make installchronosbootloader`
-
-for YARDSTICKONE:
-  `make installys1bootloader`
-
-now unplug the debugger and plug in your USB dongle.
-
-If you have just installed the bootloader, the dongle should be in bootloader mode, indicated by a solid LED. 
-
-If you are re-flashing a dongle that is already running rfcat, the Makefile targets will force it into bootloader
-mode for you, but you can manually put it into bootloader mode either by holding down the EMK/DONS button as you plug 
-it into USB (on the CHRONOS or YARDSTICKONE jumper P2_2/DC to GROUND), or by issuing the command `d.bootloader()` to rfcat in interactive 
-mode (`rfcat -r`), or by issuing the command `rfcat --bootloader --force` from the command line.
-
-Once you have a solid LED, or if you're running an rfcat dongle, you can do the following:
-
-`cd firmware`
-
-for EMK/DONSDONGLE:
-* `make installRfCatDonsDongleCCBootloader`
-
-for CHRONOS:
-* `make installRfCatChronosDongleCCBootloader`
-
-for YARDSTICKONE:
-* `make installRfCatYS1CCBootloader`
-
-The new version will be installed, and bootloader exited.
+Important:
+* Install the included spi_serial, check the the CC1110 reset pin mapping for your pinout.
+* Install the included rflib.
+* There is a bug in the SPI code of mraa which does not correctly parse the spi device on the Raspberry Pi. See workaround [here](https://github.com/intel-iot-devkit/mraa/issues/947) (requires changing one line of code and recompiling, hard codes the chip select to the above pin mapping).
 
 ## Installing client
 
@@ -263,8 +64,6 @@ Install rfcat onto your system.  on most linux systems, this will place `rfcat` 
 * sudo python setup.py install
 * I highly recommend installing `ipython`
   * For deb/ubuntu folk: `apt-get install ipython`
-
-
 
 ## Using rfcat
 
@@ -296,8 +95,6 @@ However, you will find that I've done that for you in the client for most things
     * If you are using the "d.poke()" functionality
         * if you use "d.setRFRegister()", this is handled for you
         * `use d.setRFRegister()`
-
-
 
 ## Epilogue
 
