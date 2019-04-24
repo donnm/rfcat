@@ -16,7 +16,7 @@ Note I've desoldered the SPI flash chip from the PCB in the below photo.
 
 ![PCB front](docs/images/pcb_front.jpg)
 
-The back of the PCB has test points. The CC1110 debug port, used for programmin (see below), uses TP2, TP3, and TP5.
+The back of the PCB has test points. The CC1110 debug port, used for programming (see below), uses TP2, TP3, and TP5.
 
 ![PCB back](docs/images/pcb_back.jpg)
 
@@ -61,6 +61,14 @@ Important:
 * Install the included spi_serial, check the the CC1110 reset pin mapping for your pinout.
 * Install the included rflib.
 * There is a bug in the SPI code of mraa which does not correctly parse the spi device on the Raspberry Pi. See workaround [here](https://github.com/intel-iot-devkit/mraa/issues/947) (requires changing one line of code and recompiling, hard codes the chip select to the above pin mapping).
+
+## Wiring photos
+
+Below photos: grey wires are +3.3V, GND, debug, debug clock, reset. Coloured wires: green (MOSI), blue (MISO), yellow (CLK), orange (CS). The SPI flash was removed and the pads used as connections to the CC1110 SPI port (see datasheet).
+
+![Wiring Aura21](docs/images/wiring_aura21.jpg)
+
+![Wiring Raspberry Pi](docs/images/wiring_rpi.jpg)
 
 ## Installing client
 
