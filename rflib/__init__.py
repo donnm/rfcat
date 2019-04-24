@@ -1,11 +1,5 @@
 #!/usr/bin/env ipython -i --no-banner
-
-from __future__ import print_function
-from __future__ import absolute_import
-
-from builtins import str
-from builtins import range
-from .chipcon_nic import *
+from chipcon_nic import *
 import rflib.bits as rfbits
 
 RFCAT_START_SPECAN  = 0x40
@@ -16,9 +10,9 @@ MAX_FREQ = 936e6
 class RfCat(FHSSNIC):
     def RFdump(self, msg="Receiving", maxnum=100, timeoutms=1000):
         try:
-            for x in range(maxnum):
+            for x in xrange(maxnum):
                 y, t = self.RFrecv(timeoutms)
-                print("(%5.3f) %s:  %s" % (t, msg, y.encode('hex')))
+                print "(%5.3f) %s:  %s" % (t, msg, y.encode('hex'))
         except ChipconUsbTimeoutException:
             pass
 
@@ -29,30 +23,24 @@ class RfCat(FHSSNIC):
         self.RFdump("Clearing")
         self.lowball(lowball)
         self.setMdmDRate(drate)
-        print("Scanning range:  ")
+        print "Scanning range:  "
         while not keystop():
             try:
-                print("(press Enter to quit)")
-                for freq in range(int(basefreq), int(basefreq+(inc*count)), int(inc)):
-                    print("Scanning for frequency %d..." % freq)
+                print "(press Enter to quit)"
+                for freq in xrange(int(basefreq), int(basefreq+(inc*count)), int(inc)):
+                    print "Scanning for frequency %d..." % freq
                     self.setFreq(freq)
                     self.RFdump(timeoutms=delaysec*1000)
                     if keystop():
                         break
             except KeyboardInterrupt:
-                print("Please press <enter> to stop")
+                print "Please press <enter> to stop"
 
         sys.stdin.read(1)
         self.lowballRestore()
 
-    def specan(self, centfreq=915e6, inc=250e3, count=104):
-        '''
-        Enter Spectrum Analyzer mode.
-        this sets the mode of the dongle to send data, and brings up the GUI.
-
-        centfreq is the center frequency
-        '''
-        freq, delta = self._doSpecAn(centfreq, inc, count)
+    def specan(self, basefreq=902e6, inc=250e3, count=104):
+        freq, delta = self._doSpecAn(basefreq, inc, count)
 
         import rflib.ccspecan as rfspecan
         rfspecan.ensureQapp()
@@ -63,18 +51,12 @@ class RfCat(FHSSNIC):
         window.show()
         rfspecan._qt_app.exec_()
         
-    def _doSpecAn(self, centfreq, inc, count):
+    def _doSpecAn(self, basefreq, inc, count):
         '''
         store radio config and start sending spectrum analysis data
-        
-        centfreq = Center Frequency
         '''
         if count>255:
             raise Exception("sorry, only 255 samples per pass... (count)")
-
-        spectrum = (count * inc) 
-        halfspec = spectrum / 2.0
-        basefreq = centfreq - halfspec
         if (count * inc) + basefreq > MAX_FREQ:
             raise Exception("Sorry, %1.3f + (%1.3f * %1.3f) is higher than %1.3f" %
                     (basefreq, count, inc))
@@ -99,8 +81,8 @@ class RfCat(FHSSNIC):
         self.setRadioConfig()
 
 
-    def rf_configure(*args, **kwargs):
-        self.setRFparameters(*args, **kwargs)
+    def rf_configure(*args, **k2args):
+        pass
 
     def rf_redirection(self, fdtup, use_rawinput=False, printable=False):
         buf = ''
@@ -215,33 +197,29 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
     try:
         import IPython.Shell
         ipsh = IPython.Shell.IPShell(argv=[''], user_ns=lcls, user_global_ns=gbls)
-        print(intro)
-        ipsh.mainloop()
+        print intro
+        ipsh.mainloop(intro)
 
-    except ImportError as e:
+    except ImportError, e:
         try:
             from IPython.terminal.interactiveshell import TerminalInteractiveShell
             ipsh = TerminalInteractiveShell()
             ipsh.user_global_ns.update(gbls)
             ipsh.user_global_ns.update(lcls)
             ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
-            print(intro)
-            ipsh.mainloop()
-        except ImportError as e:
+            ipsh.mainloop(intro)
+        except ImportError, e:
             try:
                 from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
                 ipsh = TerminalInteractiveShell()
                 ipsh.user_global_ns.update(gbls)
                 ipsh.user_global_ns.update(lcls)
                 ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
-
-                print(intro)
-                ipsh.mainloop()
+                ipsh.mainloop(intro)
             except ImportError, e:
-                print(e)
+                print e
                 shell = code.InteractiveConsole(gbls)
-                print(intro)
-                shell.interact()
+                shell.interact(intro)
 
 
 if __name__ == "__main__":

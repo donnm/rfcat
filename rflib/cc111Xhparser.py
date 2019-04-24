@@ -40,9 +40,6 @@ SFR(DPH0,     0x83); // Data Pointer 0 High Byte
 SFR(DPL1,     0x84); // Data Pointer 1 Low Byte
 SFR(DPH1,     0x85); // Data Pointer 1 High Byte
 """
-
-from __future__ import print_function
-
 import sys
 
 
@@ -89,14 +86,14 @@ def parseLines(lines):
                 continue
             name, value = pieces
             if "(" in name:
-                print(("SKIPPING: %s"%(line)), file=sys.stderr)
+                print >>sys.stderr,("SKIPPING: %s"%(line))
                 continue                # skip adding "function" defines
             defs[name.strip()] = value.strip()
             
         elif (line.startswith("SFR(")):
             endparen = line.find(")")
             if (endparen == -1):
-                print(("ERROR: SFR without end parens: '%s'"%(line)), file=sys.stderr)
+                print >>sys.stderr,("ERROR: SFR without end parens: '%s'"%(line))
                 continue
             line = line[4:endparen].strip()
             name, value = line.split(",", 1)
@@ -104,7 +101,7 @@ def parseLines(lines):
         elif (line.startswith("SFRX(")):
             endparen = line.find(")")
             if (endparen == -1):
-                print(("ERROR: SFRX without end parens: '%s'"%(line)), file=sys.stderr)
+                print >>sys.stderr,("ERROR: SFRX without end parens: '%s'"%(line))
                 continue
             line = line[5:endparen].strip()
             name, value = line.split(",", 1)
@@ -112,7 +109,7 @@ def parseLines(lines):
         elif (line.startswith("SBIT")):
             endparen = line.find(")")
             if (endparen == -1):
-                print(("ERROR: SBIT without end parens: '%s'"%(line)), file=sys.stderr)
+                print >>sys.stderr,("ERROR: SBIT without end parens: '%s'"%(line))
                 continue
             line = line[5:endparen].strip()
             name, val1, val2 = line.split(",", 2)
@@ -127,7 +124,7 @@ if __name__ == '__main__':
     defs.update(parseLines(file('../includes/cc1111.h')))
     defs.update(parseLines(file('/usr/share/sdcc/include/mcs51/cc1110.h')))
 
-    skeys = list(defs.keys())
+    skeys = defs.keys()
     skeys.sort()
     out = ["%-30s = %s"%(key,defs[key]) for key in skeys]
 
