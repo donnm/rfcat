@@ -26,7 +26,7 @@ Requires soldering skills. See [CC1110 datasheet](http://www.ti.com/product/CC11
 
 ### Programming pins
 
-To program the CC1110, wire to the debug port as described in the datasheet. The pin mapping for a Raspberry Pi is:
+To program the CC1110, wire to the debug port as described in the document [CC1110/ CC2430/ CC2510 Debug and Programming Interface Specification](http://www.ti.com/lit/ug/swra124/swra124.pdf). The pin mapping for programming from a Raspberry Pi would be something like:
 
 ```
 CC1110 PIN        Aura21 pad        Raspberry Pi GPIO       mraa PIN
@@ -34,6 +34,8 @@ P2_1 (debug)      TP3               BCM 17                  11
 P2_2 (clock)      TP5               BCM 18                  12
 RESET_N (reset)   TP2               BCM 27                  13
 ```
+
+If you use different Pi GPIO/mraa pins, just make sure to use the same pins when flashing with ccprog (see below).
 
 ### SPI communication
 
@@ -47,7 +49,8 @@ P0_4              MOSI SPI flash    BCM 10
 P0_5              MISO SPI flash    BCM 9
 ```
 
-Important:
+**Important:**
+* You need to enable spi0 on the Raspberry Pi.
 * Install the included spi_serial, check the the CC1110 reset pin mapping for your pinout.
 * Install the included rflib.
 * There is a bug in the SPI code of mraa which does not correctly parse the spi device on the Raspberry Pi. See workaround [here](https://github.com/intel-iot-devkit/mraa/issues/947) (requires changing one line of code and recompiling, hard codes the chip select to the above pin mapping).
