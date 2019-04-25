@@ -8,7 +8,7 @@ This is a stripped down README to show how to get the Aura21 working with rfcat.
 
 Note, use the Aura21 branch.
 
-# Photos
+## Photos
 
 ![Aura21](docs/images/front-back.jpg)
 
@@ -20,11 +20,11 @@ The back of the PCB has test points. The CC1110 debug port, used for programming
 
 ![PCB back](docs/images/pcb_back.jpg)
 
-# Pin mappings
+## Pin mappings
 
 Requires soldering skills. See [CC1110 datasheet](http://www.ti.com/product/CC1110-CC1111#).
 
-## Programming
+### Programming pins
 
 To program the CC1110, wire to the debug port as described in the datasheet. The pin mapping for a Raspberry Pi is:
 
@@ -35,17 +35,7 @@ P2_2 (clock)      TP5               BCM 18                  12
 RESET_N (reset)   TP2               BCM 27                  13
 ```
 
-Programming can be done with [ccprog](https://github.com/ps2/ccprog), which uses [mraa](https://github.com/intel-iot-devkit/mraa) and thus mraa pin numbering:
-
-`sudo ccprog -p 12,11,13 erase`
-
-`sudo ccprog -p 12,11,13 write bins/Aura21.hex`
-
-`sudo ccprog -p 12,11,13 reset`
-
-Programming should be done as above, it is important to erase before writing new firmware.
-
-## SPI communication
+### SPI communication
 
 To talk to the Aura21 using rfcat, we could use either serial or SPI. Only SPI is implemented, and the pin mapping is as follows:
 
@@ -62,13 +52,32 @@ Important:
 * Install the included rflib.
 * There is a bug in the SPI code of mraa which does not correctly parse the spi device on the Raspberry Pi. See workaround [here](https://github.com/intel-iot-devkit/mraa/issues/947) (requires changing one line of code and recompiling, hard codes the chip select to the above pin mapping).
 
-## Wiring photos
+### Wiring photos
 
 Below photos: grey wires are +3.3V, GND, debug, debug clock, reset. Coloured wires: green (MOSI), blue (MISO), yellow (CLK), orange (CS). The SPI flash was removed and the pads used as connections to the CC1110 SPI port (see datasheet).
 
 ![Wiring Aura21](docs/images/wiring_aura21.jpg)
 
 ![Wiring Raspberry Pi](docs/images/wiring_rpi.jpg)
+
+## Building firmware
+
+1. Clone this repo.
+2. Install dependencies (sdcc).
+3. `cd rfcat/firmware`
+4. `make aura21fw`
+
+## Flashing firmware
+
+Programming can be done with [ccprog](https://github.com/ps2/ccprog), which uses [mraa](https://github.com/intel-iot-devkit/mraa) and thus mraa pin numbering:
+
+`sudo ccprog -p 12,11,13 erase`
+
+`sudo ccprog -p 12,11,13 write bins/Aura21.hex`
+
+`sudo ccprog -p 12,11,13 reset`
+
+Programming should be done as above, it is important to erase before writing new firmware.
 
 ## Installing client
 
